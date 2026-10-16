@@ -60,6 +60,12 @@ Full provenance + Driving Corridor table: [`docs/sota_comparison.tex`](docs/sota
 
 ---
 
+## Project scope
+
+This checkout keeps RadarPillar and the View-of-Delft workflow. Unused OpenPCDet
+networks, dataset loaders and their CUDA extensions have been removed. Shared
+KITTI-format utilities are retained for VoD. See [the dependency notes](docs/GETTING_STARTED.md).
+
 ## Architecture
 
 ```

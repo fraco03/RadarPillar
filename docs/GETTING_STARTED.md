@@ -1,102 +1,25 @@
-# Getting Started
-The dataset configs are located within [tools/cfgs/dataset_configs](../tools/cfgs/dataset_configs), 
-and the model configs are located within [tools/cfgs](../tools/cfgs) for different datasets. 
+# View-of-Delft workflow
 
+This checkout supports RadarPillar on View-of-Delft (VoD). Other OpenPCDet
+detectors and the Astyx, nuScenes and KITTI dataset loaders have been removed.
+KITTI-format parsing, calibration and evaluation utilities remain because VoD uses them.
 
-## Dataset Preparation
+Follow the installation, data preparation, training and evaluation commands in
+[the project README](../README.md). The checkpoint configuration is
+`tools/cfgs/vod_models/vod_radarpillar_rot.yaml`.
 
-Currently we provide the dataloader of KITTI dataset and NuScenes dataset, and the supporting of more datasets are on the way.  
+The retained pipeline is PillarVFE → PillarAttention → PointPillarScatter →
+BaseBEVBackbone → AnchorHeadSingle. The detector retains the `PointPillar` name
+and its parameter names for checkpoint compatibility.
 
-### KITTI Dataset
-* Please download the official [KITTI 3D object detection](http://www.cvlibs.net/datasets/kitti/eval_object.php?obj_benchmark=3d) dataset and organize the downloaded files as follows (the road planes could be downloaded from [[road plane]](https://drive.google.com/file/d/1d5mq0RXRnvHPVeKx6Q612z0YRO1t2wAp/view?usp=sharing), which are optional for data augmentation in the training):
-* NOTE: if you already have the data infos from `pcdet v0.1`, you can choose to use the old infos and set the DATABASE_WITH_FAKELIDAR option in tools/cfgs/dataset_configs/kitti_dataset.yaml as True. The second choice is that you can create the infos and gt database again and leave the config unchanged.
+CUDA extensions still required: `iou3d_nms_cuda` for detection/evaluation and
+`roiaware_pool3d_cuda` for points-in-boxes operations in dataset preparation and
+augmentation. `spconv` is still used for voxelization. PointNet++ and RoIPointPool
+extensions are no longer built.
 
-```
-OpenPCDet
-├── data
-│   ├── kitti
-│   │   │── ImageSets
-│   │   │── training
-│   │   │   ├──calib & velodyne & label_2 & image_2 & (optional: planes)
-│   │   │── testing
-│   │   │   ├──calib & velodyne & image_2
-├── pcdet
-├── tools
-```
+## Structural checks
 
-* Generate the data infos by running the following command: 
-```python 
-python -m pcdet.datasets.kitti.kitti_dataset create_kitti_infos tools/cfgs/dataset_configs/kitti_dataset.yaml
-```
-
-### NuScenes Dataset
-* Please download the official [NuScenes 3D object detection dataset](https://www.nuscenes.org/download) and 
-organize the downloaded files as follows: 
-```
-OpenPCDet
-├── data
-│   ├── nuscenes
-│   │   │── v1.0-trainval (or v1.0-mini if you use mini)
-│   │   │   │── samples
-│   │   │   │── sweeps
-│   │   │   │── maps
-│   │   │   │── v1.0-trainval  
-├── pcdet
-├── tools
-```
-
-* Install the `nuscenes-devkit` with version `1.0.5` by running the following command: 
-```shell script
-pip install nuscenes-devkit==1.0.5
-```
-
-* Generate the data infos by running the following command (it may take several hours): 
-```python 
-python -m pcdet.datasets.nuscenes.nuscenes_dataset --func create_nuscenes_infos \ 
-    --cfg_file tools/cfgs/dataset_configs/nuscenes_dataset.yaml \
-    --version v1.0-trainval
-```
-
-## Training & Testing
-
-
-### Test and evaluate the pretrained models
-* Test with a pretrained model: 
-```shell script
-python test.py --cfg_file ${CONFIG_FILE} --batch_size ${BATCH_SIZE} --ckpt ${CKPT}
-```
-
-* To test all the saved checkpoints of a specific training setting and draw the performance curve on the Tensorboard, add the `--eval_all` argument: 
-```shell script
-python test.py --cfg_file ${CONFIG_FILE} --batch_size ${BATCH_SIZE} --eval_all
-```
-
-* To test with multiple GPUs:
-```shell script
-sh scripts/dist_test.sh ${NUM_GPUS} \
-    --cfg_file ${CONFIG_FILE} --batch_size ${BATCH_SIZE}
-
-# or
-
-sh scripts/slurm_test_mgpu.sh ${PARTITION} ${NUM_GPUS} \ 
-    --cfg_file ${CONFIG_FILE} --batch_size ${BATCH_SIZE}
-```
-
-
-### Train a model
-You could optionally add extra command line parameters `--batch_size ${BATCH_SIZE}` and `--epochs ${EPOCHS}` to specify your preferred parameters. 
-  
-
-* Train with multiple GPUs or multiple machines
-```shell script
-sh scripts/dist_train.sh ${NUM_GPUS} --cfg_file ${CONFIG_FILE}
-
-# or 
-
-sh scripts/slurm_train.sh ${PARTITION} ${JOB_NAME} ${NUM_GPUS} --cfg_file ${CONFIG_FILE}
-```
-
-* Train with a single GPU:
-```shell script
-python train.py --cfg_file ${CONFIG_FILE}
-```
+Run `python tools/check_project_structure.py` from the repository root. This
+checks Python syntax, local imports, configured model registry entries, base
+config paths and CUDA build sources without importing PyTorch. Inference and
+training still need a separate smoke test in the NVIDIA environment.

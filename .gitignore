@@ -24,3 +24,4 @@ paper_en/
 # paper-specific helper scripts
 tools/measure_fps.py
 tools/visualize_paper_compare.py
+.DS_Store

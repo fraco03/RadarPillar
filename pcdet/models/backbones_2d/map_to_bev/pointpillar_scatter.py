@@ -16,7 +16,7 @@ class PointPillarScatter(nn.Module):
         batch_spatial_features = []
         batch_size = coords[:, 0].max().int().item() + 1
         for batch_idx in range(batch_size):
-            spatial_feature = torch.zeros(
+            spatial_feature = torch.zeros( #create a tensor of zeros with shape (num_bev_features, nz * nx * ny) 
                 self.num_bev_features,
                 self.nz * self.nx * self.ny,
                 dtype=pillar_features.dtype,
